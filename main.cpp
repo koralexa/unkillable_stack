@@ -21,7 +21,6 @@
 
 int main() {
     struct Stack_int s1;
-    s1.data = NULL;
     StackConstructor(&s1, 5);
     StackPush(&s1, 10);
     StackPush(&s1, 11);
