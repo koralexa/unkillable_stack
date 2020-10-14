@@ -7,20 +7,17 @@
 
 //--------------------------------------------------------------------------------
 
-#define CAT1(x) Stack_##x
-#define CAT2(x) Stack_elem_##x
-#define STACK(x) CAT1(x)
-#define ELEM(x) CAT2(x)
-
-struct ELEM(TYPE) {
-    TYPE value;
-    struct ELEM(TYPE) * next;
-};
+#define CAT(x) Stack_##x
+#define STACK(x) CAT(x)
 
 struct STACK(TYPE) {
+    unsigned long long canary1;
     int size;
     int capacity;
-    struct ELEM(TYPE) * data;
+    TYPE * data;
+    unsigned long long stack_hash;
+    unsigned long long data_hash;
+    unsigned long long canary2;
 };
 
 //--------------------------------------------------------------------------------
@@ -36,8 +33,6 @@ int StackPop(struct STACK(TYPE) * thou, TYPE * value);
 int StackCheck(struct STACK(TYPE) * thou);
 
 void StackDump(struct STACK(TYPE) * thou);
-
-void PrintError(enum error err);
 
 //--------------------------------------------------------------------------------
 

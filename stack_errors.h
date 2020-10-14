@@ -8,7 +8,13 @@
 #ifndef stack_errors_h
 #define stack_errors_h
 
+//--------------------------------------------------------------------------------
+
 const void * errptr = (void *)13;
+const long poison = 0xDEADBEEFDEADBE7F;
+const unsigned long long good_canary = 0xDEADBEEFBADF00DULL;
+
+//--------------------------------------------------------------------------------
 
 enum error {
     OK = 0,
@@ -24,8 +30,16 @@ enum error {
     BAD_CAPACITY,
     BAD_SIZE,
     BAD_DATA,
-    BAD_QUANTITY
+    BAD_QUANTITY,
+    BAD_STACK_CANARY,
+    BAD_DATA_CANARY,
+    BAD_HASH_POINTER_TO_DATA,
+    BAD_HASH_POINTER_TO_HASH,
+    BAD_HASH,
+    HASH_FUNC
 };
+
+//--------------------------------------------------------------------------------
 
 //! Prints clarification for every type of error
 //!
@@ -74,8 +88,52 @@ void PrintError(enum error err) {
         case BAD_QUANTITY:
             fprintf(stderr, " (In fact stack has more or less then size elements) ");
             break;
+        case BAD_STACK_CANARY:
+            fprintf(stderr, " (Stack canary is spoiled) ");
+            break;
+        case BAD_DATA_CANARY:
+            fprintf(stderr, " (Data canary is spoiled) ");
+            break;
+        case BAD_HASH_POINTER_TO_DATA:
+            fprintf(stderr, " (Hash function got null pointer to data) ");
+            break;
+        case BAD_HASH_POINTER_TO_HASH:
+            fprintf(stderr, " (Hash function got null pointer to hash) ");
+            break;
+        case BAD_HASH:
+            fprintf(stderr, " (Hash is incorrect) ");
+            break;
+        case HASH_FUNC:
+            fprintf(stderr, " (Error in StackHash function) ");
+            break;
     }
 }
 
+//--------------------------------------------------------------------------------
+
+//! Counts hash for stack structure
+//!
+//! @param [in] p  pointer to stack
+//! @param [in] count  number of bytes to count hash
+//! @param [out] h  pointer to place to write answer
+//!
+//! @return 0 in case hash counted successfully, otherwise type of error (see enum error definition in stack_errors.h)
+int StackHash(char * p, int count, unsigned long long * h) {
+    if (!p) {
+        return BAD_HASH_POINTER_TO_DATA;
+    }
+    if (!h) {
+        return BAD_HASH_POINTER_TO_HASH;
+    }
+    unsigned long long tmp = 0;
+    while (count > 0) {
+        tmp = tmp + *p;
+        tmp = tmp - ((tmp << 8) | (tmp >> 10));
+        p++;
+        count--;
+    }
+    *h = tmp;
+    return 0;
+}
 
 #endif
