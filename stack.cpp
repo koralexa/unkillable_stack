@@ -11,56 +11,47 @@
 #include <stdlib.h>
 #include <typeinfo> // use .cpp only for STACKDUMP
 #include <iostream>
+#include <fstream>
 
 //--------------------------------------------------------------------------------
-// я не успела написать комментарии :(
-// но держите вместо них котика
-//
-//         ／＞__ フ
-//　　　　　| 　_　 _\
-//　 　　　／`ミ _x 彡
-//　　 　 /　　　 　 |
-//　　　 /　 ヽ　　 ﾉ
-//　／￣|　　 |　|　|
-//　| (￣ヽ＿_ヽ_)_)
-//  ＼二つ
-//
-//--------------------------------------------------------------------------------
 
-//! Outputs stack info into stderr
+//! Outputs stack info into stack.log file
 //!
 //! @param [in] thou pointer to stack
 #define STACKDUMP(thou) { \
     TYPE poison_t = (TYPE)poison; \
     int check = StackCheck(thou); \
-    fprintf(stderr, "Stack [TYPE = %s]", typeid(TYPE).name()); \
+    FILE * log = fopen("stack.log", "a"); \
+    fprintf(log, "Stack %s [TYPE = %s]", thou->name, typeid(TYPE).name()); \
+    fclose(log); \
     PrintError((enum error)check); \
-    fprintf(stderr, "[%s:%d in function %s()]", __FILE__, __LINE__, __func__); \
-    fprintf(stderr, "{\n"); \
-    fprintf(stderr, "  size = %d\n", thou->size); \
-    fprintf(stderr, "  capacity = %d\n", thou->capacity); \
+    log = fopen("stack.log", "a"); \
+    fprintf(log, "[%s:%d in function %s()] ", __FILE__, __LINE__, __func__); \
+    fprintf(log, "{\n"); \
+    fprintf(log, "  size = %d\n", thou->size); \
+    fprintf(log, "  capacity = %d\n", thou->capacity); \
     if (CHECK_TYPE > 1) { \
         if (thou->canary1 == good_canary) { \
-            fprintf(stderr, "  stack canary left : ok\n"); \
+            fprintf(log, "  stack canary left : ok\n"); \
         } else { \
-            fprintf(stderr, "  stack canary left : error\n"); \
+            fprintf(log, "  stack canary left : error\n"); \
         } \
         if (thou->canary2 == good_canary) { \
-            fprintf(stderr, "  stack canary right : ok\n"); \
+            fprintf(log, "  stack canary right : ok\n"); \
         } else { \
-            fprintf(stderr, "  stack canary right : error\n"); \
+            fprintf(log, "  stack canary right : error\n"); \
         } \
         if (*(unsigned long long *)((char *)thou->data - sizeof(unsigned long long)) \
             == good_canary) { \
-            fprintf(stderr, "  data canary left : ok\n"); \
+            fprintf(log, "  data canary left : ok\n"); \
         } else { \
-            fprintf(stderr, "  stack canary left : error\n"); \
+            fprintf(log, "  stack canary left : error\n"); \
         } \
         if (*(unsigned long long *)((char *)thou->data + thou->capacity * sizeof(thou->data[0])) \
             == good_canary) { \
-            fprintf(stderr, "  data canary right : ok\n"); \
+            fprintf(log, "  data canary right : ok\n"); \
         } else { \
-            fprintf(stderr, "  stack canary right : error\n"); \
+            fprintf(log, "  stack canary right : error\n"); \
         } \
     } \
     \
@@ -70,47 +61,66 @@
         thou->stack_hash = 0; \
         StackHash((char *)&(thou->canary1), sizeof(struct STACK(TYPE)), &(thou->stack_hash)); \
         if (thou->stack_hash != h_stack) { \
-            fprintf(stderr, "  stack hash : error\n"); \
+            fprintf(log, "  stack hash : error\n"); \
         } else { \
-            fprintf(stderr, "  stack hash : ok\n"); \
+            fprintf(log, "  stack hash : ok\n"); \
         } \
         char * tmp = (char *)thou->data - sizeof(unsigned long long); \
         StackHash(tmp, 2 * sizeof(unsigned long long) + thou->capacity * sizeof(TYPE), &(thou->data_hash)); \
         if (thou->data_hash != h_data) { \
-            fprintf(stderr, "  data hash : error\n"); \
+            fprintf(log, "  data hash : error\n"); \
         } else { \
-            fprintf(stderr, "  data hash : ok\n"); \
+            fprintf(log, "  data hash : ok\n"); \
         } \
         thou->data_hash = h_data; \
         thou->stack_hash = h_stack; \
     } \
     \
     if (thou->data == errptr) { \
-        fprintf(stderr, "  data = error pointer = (void *)13.\n}\n"); \
+        fprintf(log, "  data = error pointer = (void *)13.\n}\n"); \
     } else if (thou->data == NULL) { \
-        fprintf(stderr, "  data = NULL.\n}\n"); \
+        fprintf(log, "  data = NULL.\n}\n"); \
     } else { \
-        fprintf(stderr, "  data [%p] {\n", thou->data); \
+        fprintf(log, "  data [%p] {\n", thou->data); \
         int i = 0; \
+        fclose(log); \
+        std::ofstream fout; \
+        fout.open("stack.log", std::ios::app); \
         while (i < thou->capacity) { \
             if (i < thou->size) { \
-                fprintf(stderr, "    *[%d] = ", i); \
+                fout << "    *[%d] = "; \
             } else { \
-                fprintf(stderr, "     [%d] = ", i); \
+                fout << "     [%d] = "; \
             } \
             if (thou->data[i] == poison_t) { \
-                fprintf(stderr, "POISON!\n"); \
+                fout << "POISON!\n"; \
             } else { \
-                std::cerr << thou->data[i] << std::endl; \
+                fout << thou->data[i] << std::endl; \
             } \
             i++; \
         } \
+        fout.close(); \
+        log = fopen("stack.log", "a"); \
         if (i == 0) { \
-            fprintf(stderr, "    Stack is empty.\n"); \
+            fprintf(log, "    Stack is empty.\n"); \
         } \
-        fprintf(stderr, "  }\n"); \
-        fprintf(stderr, "}\n"); \
+        fprintf(log, "  }\n"); \
+        fprintf(log, "}\n\n"); \
     } \
+    fclose(log); \
+}
+
+//--------------------------------------------------------------------------------
+
+//! Saves stack variable name and calls StackInit()
+//!
+//! @param [in] s  stack variable
+//! @param [in] capacity  capacity for stack
+//!
+//! @note use macro only for saving variable name, all needed actions for constructor are executet in function StackInit()
+#define StackConstructor(s, capacity) { \
+    s.name = #s; \
+    StackInit(&s, capacity); \
 }
 
 //--------------------------------------------------------------------------------
@@ -121,7 +131,7 @@
 //! @param [in] capacity capacity for stack
 //!
 //! @return 0 in case there are no errors, otherwise type of error (see enum error definition in stack_errors.h)
-int StackConstructor(struct STACK(TYPE) * thou, int capacity) {
+int StackInit(struct STACK(TYPE) * thou, int capacity) {
     if (!thou) {
         return FUNC_NULL_POINTER_TO_STACK;
     }
@@ -180,7 +190,7 @@ int StackDestructor (struct STACK(TYPE) * thou) {
             STACKDUMP(thou);
             assert(!"Stack destructor check stack error."); // only in debug mode
             // get here only in release mode
-            fprintf(stderr, "StackDestructor() got bad stack.");
+            fprintf(stderr, "StackDestructor() got bad stack.\n");
             return STACK_CHECK;
         }
     }
@@ -218,7 +228,7 @@ int StackPush(struct STACK(TYPE) * thou, TYPE value) {
             STACKDUMP(thou);
             assert(!"Stack push: check stack error."); // only in debug mode
             // get here only in release mode
-            fprintf(stderr, "StackPush() got bad stack.");
+            fprintf(stderr, "StackPush() got bad stack.\n");
             return STACK_CHECK;
         }
     }
@@ -226,6 +236,22 @@ int StackPush(struct STACK(TYPE) * thou, TYPE value) {
     if (thou->size == thou->capacity) {
         return STACK_OVERFLOW;
     }
+    
+    // save stack for tansaction rollback
+    char * tmp_stack = (char *)calloc(sizeof(struct STACK(TYPE)), 1);
+    if (tmp_stack == NULL) {
+        return BAD_ALLOC;
+    }
+    char * tmp_data = (char *)calloc(sizeof(TYPE) * thou->capacity +
+                                     2 * sizeof(unsigned long long), 1);
+    if (tmp_data == NULL) {
+        free(tmp_stack);
+        return BAD_ALLOC;
+    }
+    memcpy(tmp_stack, thou, sizeof(struct STACK(TYPE)));
+    memcpy(tmp_data, (char *)(thou->data) - sizeof(unsigned long long),
+           sizeof(TYPE) * thou->capacity + 2 * sizeof(unsigned long long));
+    
     
     thou->data[thou->size] = value;
     thou->size++;
@@ -236,10 +262,20 @@ int StackPush(struct STACK(TYPE) * thou, TYPE value) {
         char * tmp = (char *)thou->data - sizeof(unsigned long long);
         int hash_res = StackHash(tmp, 2 * sizeof(unsigned long long) + thou->capacity * sizeof(TYPE), &(thou->data_hash));
         if (hash_res != 0) {
+            memcpy(thou, tmp_stack, sizeof(struct STACK(TYPE)));
+            memcpy((char *)(thou->data) - sizeof(unsigned long long), tmp_data,
+                   sizeof(TYPE) * thou->capacity + 2 * sizeof(unsigned long long));
+            free(tmp_stack);
+            free(tmp_data);
             return HASH_FUNC;
         }
         hash_res = StackHash((char *)&(thou->canary1), sizeof(struct STACK(TYPE)), &(thou->stack_hash));
         if (hash_res != 0) {
+            memcpy(thou, tmp_stack, sizeof(struct STACK(TYPE)));
+            memcpy((char *)(thou->data) - sizeof(unsigned long long), tmp_data,
+                   sizeof(TYPE) * thou->capacity + 2 * sizeof(unsigned long long));
+            free(tmp_stack);
+            free(tmp_data);
             return HASH_FUNC;
         }
     }
@@ -248,9 +284,14 @@ int StackPush(struct STACK(TYPE) * thou, TYPE value) {
         int check = StackCheck(thou);
         if (check != 0) {
             STACKDUMP(thou);
-            assert(!"Stack push: check stack error."); // only in debug mode
+            memcpy(thou, tmp_stack, sizeof(struct STACK(TYPE)));
+            memcpy((char *)(thou->data) - sizeof(unsigned long long), tmp_data,
+                   sizeof(TYPE) * thou->capacity + 2 * sizeof(unsigned long long));
+            free(tmp_stack);
+            free(tmp_data);
+            // assert(!"Stack push: check stack error."); // only in debug mode
             // get here only in release mode
-            fprintf(stderr, "StackPush() got bad stack.");
+            fprintf(stderr, "StackPush() error. Transaction aborted.\n");
             return STACK_CHECK;
         }
     }
@@ -280,7 +321,7 @@ int StackPop(struct STACK(TYPE) * thou, TYPE * value) {
             STACKDUMP(thou);
             assert(!"Stack pop: check stack error."); // only in debug mode
             // get here only in release mode
-            fprintf(stderr, "StackPop() got bad stack.");
+            fprintf(stderr, "StackPop() got bad stack.\n");
             return STACK_CHECK;
         }
     }
@@ -288,6 +329,21 @@ int StackPop(struct STACK(TYPE) * thou, TYPE * value) {
     if (thou->size == 0) {
         return STACK_EMPTY;
     }
+    
+    // save stack for tansaction rollback
+    char * tmp_stack = (char *)calloc(sizeof(struct STACK(TYPE)), 1);
+    if (tmp_stack == NULL) {
+        return BAD_ALLOC;
+    }
+    char * tmp_data = (char *)calloc(sizeof(TYPE) * thou->capacity +
+                                     2 * sizeof(unsigned long long), 1);
+    if (tmp_data == NULL) {
+        free(tmp_stack);
+        return BAD_ALLOC;
+    }
+    memcpy(tmp_stack, thou, sizeof(struct STACK(TYPE)));
+    memcpy(tmp_data, (char *)(thou->data) - sizeof(unsigned long long),
+           sizeof(TYPE) * thou->capacity + 2 * sizeof(unsigned long long));
     
     *value = thou->data[thou->size - 1];
     thou->data[thou->size - 1] = (TYPE)poison;
@@ -299,10 +355,20 @@ int StackPop(struct STACK(TYPE) * thou, TYPE * value) {
         char * tmp = (char *)thou->data - sizeof(unsigned long long);
         int hash_res = StackHash(tmp, 2 * sizeof(unsigned long long) + thou->capacity * sizeof(TYPE), &(thou->data_hash));
         if (hash_res != 0) {
+            memcpy(thou, tmp_stack, sizeof(struct STACK(TYPE)));
+            memcpy((char *)(thou->data) - sizeof(unsigned long long), tmp_data,
+                   sizeof(TYPE) * thou->capacity + 2 * sizeof(unsigned long long));
+            free(tmp_stack);
+            free(tmp_data);
             return HASH_FUNC;
         }
         hash_res = StackHash((char *)&(thou->canary1), sizeof(struct STACK(TYPE)), &(thou->stack_hash));
         if (hash_res != 0) {
+            memcpy(thou, tmp_stack, sizeof(struct STACK(TYPE)));
+            memcpy((char *)(thou->data) - sizeof(unsigned long long), tmp_data,
+                   sizeof(TYPE) * thou->capacity + 2 * sizeof(unsigned long long));
+            free(tmp_stack);
+            free(tmp_data);
             return HASH_FUNC;
         }
     }
@@ -310,10 +376,15 @@ int StackPop(struct STACK(TYPE) * thou, TYPE * value) {
     if (CHECK_TYPE > 0) {
         int check = StackCheck(thou);
         if (check != 0) {
+            memcpy(thou, tmp_stack, sizeof(struct STACK(TYPE)));
+            memcpy((char *)(thou->data) - sizeof(unsigned long long), tmp_data,
+                   sizeof(TYPE) * thou->capacity + 2 * sizeof(unsigned long long));
+            free(tmp_stack);
+            free(tmp_data);
             STACKDUMP(thou);
             assert(!"Stack pop: check stack error."); // only in debug mode
             // get here only in release mode
-            fprintf(stderr, "StackPop() got bad stack.");
+            fprintf(stderr, "StackPop() error. Transaction aborted.\n");
             return STACK_CHECK;
         }
     }

@@ -45,68 +45,70 @@ enum error {
 //!
 //! @param [in] err type of error
 void PrintError(enum error err) {
+    FILE * log = fopen("stack.log", "a");
     switch (err) {
         case OK:
-            fprintf(stderr, " (ok) ");
+            fprintf(log, " (ok) ");
             break;
         case FUNC_NULL_POINTER_TO_STACK:
-            fprintf(stderr, " (Stack function got null pointer to stack) ");
+            fprintf(log, " (Stack function got null pointer to stack) ");
             break;
         case FUNC_ZERO_CAPACITY:
-            fprintf(stderr, " (Stack constructor got zero capacity) ");
+            fprintf(log, " (Stack constructor got zero capacity) ");
             break;
         case FUNC_NULL_POINTER_TO_VALUE:
-            fprintf(stderr, " (Stack function got zero pointer to value for pop) ");
+            fprintf(log, " (Stack function got zero pointer to value for pop) ");
             break;
         case REPEATED_STACK_CONSTR:
-            fprintf(stderr, " (Attempt to construct stack that already exists) ");
+            fprintf(log, " (Attempt to construct stack that already exists) ");
             break;
         case STACK_CHECK:
-            fprintf(stderr, " (Error during checking the stack for integrity) ");
+            fprintf(log, " (Error during checking the stack for integrity) ");
             break;
         case BAD_ALLOC:
-            fprintf(stderr, " (Can't allocate memory) ");
+            fprintf(log, " (Can't allocate memory) ");
             break;
         case STACK_OVERFLOW:
-            fprintf(stderr, " (Stack is overflowed, can't make push) ");
+            fprintf(log, " (Stack is overflowed, can't make push) ");
             break;
         case STACK_EMPTY:
-            fprintf(stderr, " (Stack is empty, can't make pop) ");
+            fprintf(log, " (Stack is empty, can't make pop) ");
             break;
         case SIZE_LARGER_THEN_CAPACITY:
-            fprintf(stderr, " (Stack's size is larger then capacity) ");
+            fprintf(log, " (Stack's size is larger then capacity) ");
             break;
         case BAD_CAPACITY:
-            fprintf(stderr, " (Stack's capacity is under or equal zero) ");
+            fprintf(log, " (Stack's capacity is under or equal zero) ");
             break;
         case BAD_SIZE:
-            fprintf(stderr, " (Stack's size is under zero) ");
+            fprintf(log, " (Stack's size is under zero) ");
             break;
         case BAD_DATA:
-            fprintf(stderr, " (Something wrong with stack data) ");
+            fprintf(log, " (Something wrong with stack data) ");
             break;
         case BAD_QUANTITY:
-            fprintf(stderr, " (In fact stack has more or less then size elements) ");
+            fprintf(log, " (In fact stack has more or less then size elements) ");
             break;
         case BAD_STACK_CANARY:
-            fprintf(stderr, " (Stack canary is spoiled) ");
+            fprintf(log, " (Stack canary is spoiled) ");
             break;
         case BAD_DATA_CANARY:
-            fprintf(stderr, " (Data canary is spoiled) ");
+            fprintf(log, " (Data canary is spoiled) ");
             break;
         case BAD_HASH_POINTER_TO_DATA:
-            fprintf(stderr, " (Hash function got null pointer to data) ");
+            fprintf(log, " (Hash function got null pointer to data) ");
             break;
         case BAD_HASH_POINTER_TO_HASH:
-            fprintf(stderr, " (Hash function got null pointer to hash) ");
+            fprintf(log, " (Hash function got null pointer to hash) ");
             break;
         case BAD_HASH:
-            fprintf(stderr, " (Hash is incorrect) ");
+            fprintf(log, " (Hash is incorrect) ");
             break;
         case HASH_FUNC:
-            fprintf(stderr, " (Error in StackHash function) ");
+            fprintf(log, " (Error in StackHash function) ");
             break;
     }
+    fclose(log);
 }
 
 //--------------------------------------------------------------------------------

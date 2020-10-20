@@ -41,10 +41,7 @@ void Test1() {
     s.size = 0;
     s.capacity = 0;
     s.data = NULL;
-    if (StackConstructor(&s, 1) != 0) {
-        std::cout << "Test1: " << RED << "ERROR" << WHITE << std::endl;
-        return;
-    }
+    StackConstructor(s, 1);
     if (StackPush(&s, 1) != 0) {
         std::cout << "Test1: " << RED << "ERROR" << WHITE << std::endl;
         return;
@@ -76,10 +73,7 @@ void Test2() {
     s.size = 0;
     s.capacity = 0;
     s.data = NULL;
-    if (StackConstructor(&s, 5) != 0) {
-        std::cout << "Test2: " << RED << "ERROR" << WHITE << std::endl;
-        return;
-    }
+    StackConstructor(s, 5);
     if (StackPush(&s, 'a') != 0) {
         std::cout << "Test2: " << RED << "ERROR" << WHITE << std::endl;
         return;
@@ -119,30 +113,27 @@ void Test3() {
     s.size = 0;
     s.capacity = 0;
     s.data = NULL;
-    if (StackConstructor(&s, 1) != 0) {
-        std::cout << "Test2: " << RED << "ERROR" << WHITE << std::endl;
-        return;
-    }
+    StackConstructor(s, 1);
     if (StackPush(&s, 2393849) != 0) {
-        std::cout << "Test2: " << RED << "ERROR" << WHITE << std::endl;
+        std::cout << "Test3: " << RED << "ERROR" << WHITE << std::endl;
         return;
     }
     long x = 0;
     if (StackPop(&s, &x) != 0) {
-        std::cout << "Test2: " << RED << "ERROR" << WHITE << std::endl;
+        std::cout << "Test3: " << RED << "ERROR" << WHITE << std::endl;
         return;
     }
     if (x != 2393849) {
-        std::cout << "Test2: " << RED << "ERROR" << WHITE << std::endl;
+        std::cout << "Test3: " << RED << "ERROR" << WHITE << std::endl;
         return;
     }
     if (StackPop(&s, &x) == 0) {
-        std::cout << "Test2: " << RED << "ERROR" << WHITE << std::endl;
+        std::cout << "Test3: " << RED << "ERROR" << WHITE << std::endl;
         return;
     }
     if (StackDestructor(&s) != 0) {
-        std::cout << "Test2: " << RED << "ERROR" << WHITE << std::endl;
+        std::cout << "Test3: " << RED << "ERROR" << WHITE << std::endl;
         return;
     }
-    std::cout << "Test2: " << GREEN << "PASSED" << WHITE << std::endl;
+    std::cout << "Test3: " << GREEN << "PASSED" << WHITE << std::endl;
 }

@@ -50,7 +50,7 @@ int main() {
     s1.size = 0;
     s1.capacity = 0;
     s1.data = NULL;
-    StackConstructor(&s1, 5);
+    StackConstructor(s1, 5);
     StackPush(&s1, 10);
     StackPush(&s1, 11);
     StackPush(&s1, 12);
@@ -70,7 +70,7 @@ int main() {
     s2.size = 0;
     s2.capacity = 0;
     s2.data = NULL;
-    StackConstructor(&s2, 10);
+    StackConstructor(s2, 10);
     StackPush(&s2, 20);
     StackPush(&s2, 28048204930);
     StackPush(&s2, 23892);

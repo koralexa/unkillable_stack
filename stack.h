@@ -14,6 +14,7 @@ struct STACK(TYPE) {
     unsigned long long canary1;
     int size;
     int capacity;
+    const char * name;
     TYPE * data;
     unsigned long long stack_hash;
     unsigned long long data_hash;
@@ -22,7 +23,7 @@ struct STACK(TYPE) {
 
 //--------------------------------------------------------------------------------
 
-int StackConstructor(struct STACK(TYPE) * thou, int capacity);
+int StackInit(struct STACK(TYPE) * thou, int capacity);
 
 int StackDestructor (struct STACK(TYPE) * thou);
 
